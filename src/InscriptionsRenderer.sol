@@ -6,10 +6,23 @@ import {MetadataRenderAdminCheck} from "zora-drops-contracts/metadata/MetadataRe
 
 import {StringsBytes32} from "./StringsBytes32.sol";
 
+/// @author @isiain
+/// @notice Inscriptions Metadata on-chain renderer
 contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
+    /// @notice Stores address => tokenId => bytes32 btc txn id
     mapping(address => mapping(uint256 => bytes32)) inscriptions;
+    /// @notice Stores address => numberInscribedTokens
     mapping(address => uint256) inscriptionsCount;
+    /// @notice Stores address => string base, string postfix, string contractURI for urls
     mapping(address => ContractInfo) contractInfos;
+
+    struct ContractInfo {
+        string base;
+        string contractURI;
+        string postfix;
+    }
+
+    event BaseURIsUpdated(address target, ContractInfo info);
 
     function addInscriptions(
         address inscriptionsContract,
@@ -27,14 +40,6 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
             inscriptionsCount[inscriptionsContract] = count;
         }
     }
-
-    struct ContractInfo {
-        string base;
-        string contractURI;
-        string postfix;
-    }
-
-    event BaseURIsUpdated(address target, ContractInfo info);
 
     function setBaseURIs(address target, ContractInfo memory info)
         external
