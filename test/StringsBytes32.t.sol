@@ -10,6 +10,6 @@ contract StringBytes32Test is Test {
             bytes32(
                 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
             )
-        ), "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        ), "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     }
 }

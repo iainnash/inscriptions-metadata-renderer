@@ -33,7 +33,7 @@ contract InscriptionsRendererTest is Test {
         renderer.addInscriptions(address(this), _getDemoData(160));
         assertEq(
             renderer.tokenURI(10),
-            "https://ordinals.com/inscription/0xc65a7bb8d6351c1cf70c95a316cc6a92839c986682d98bc35f958f4883f9d2a8i0"
+            "https://ordinals.com/inscription/c65a7bb8d6351c1cf70c95a316cc6a92839c986682d98bc35f958f4883f9d2a8i0"
         );
     }
 }
