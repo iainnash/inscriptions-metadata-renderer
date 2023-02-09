@@ -17,9 +17,12 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
     mapping(address => ContractInfo) contractInfos;
 
     struct ContractInfo {
-        string base;
+        string animationBase;
+        string imageBase;
         string contractURI;
         string postfix;
+        string title;
+        string description;
     }
 
     event BaseURIsUpdated(address target, ContractInfo info);
@@ -31,7 +34,7 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
         unchecked {
             // get count
             uint256 count = inscriptionsCount[inscriptionsContract];
-            for (uint256 i = 0; i < newInscriptions.length; ++i) {
+            for (uint256 i = 1; i < newInscriptions.length + 1; ++i) {
                 inscriptions[inscriptionsContract][count + i] = newInscriptions[
                     i
                 ];
@@ -54,12 +57,17 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
     }
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
-        return
-            string.concat(
-                contractInfos[msg.sender].base,
-                StringsBytes32.toHexString(inscriptions[msg.sender][tokenId]),
-                contractInfos[msg.sender].postfix
-            );
+        string memory animationURI = string.concat(
+            contractInfos[msg.sender].animationBase,
+            StringsBytes32.toHexString(inscriptions[msg.sender][tokenId]),
+            contractInfos[msg.sender].postfix
+        );
+
+        string memory imageURI = string.concat(
+            contractInfos[msg.sender].imageBase,
+            StringsBytes32.toHexString(inscriptions[msg.sender][tokenId])
+        );
+
     }
 
     function contractURI() external view returns (string memory) {
@@ -67,18 +75,7 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
     }
 
     function initializeWithData(bytes memory initData) external {
-        (
-            string memory _base,
-            string memory _postfix,
-            string memory _contractURI
-        ) = abi.decode(initData, (string, string, string));
-        _setBaseURIs(
-            msg.sender,
-            ContractInfo({
-                base: _base,
-                postfix: _postfix,
-                contractURI: _contractURI
-            })
-        );
+        ContractInfo memory info = abi.decode(initData, (ContractInfo));
+        _setBaseURIs(msg.sender, info);
     }
 }
