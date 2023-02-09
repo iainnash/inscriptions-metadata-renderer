@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
 /// @author iain and openzeppelin
 // @dev modified from  openzeppelin-contracts/contracts/utils/Strings.sol
 library StringsBytes32 {

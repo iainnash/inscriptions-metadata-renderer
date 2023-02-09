@@ -19,7 +19,7 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
             // get count
             uint256 count = inscriptionsCount[inscriptionsContract];
             for (uint256 i = 0; i < newInscriptions.length; ++i) {
-                inscriptions[inscriptionsContract][count + 1] = newInscriptions[
+                inscriptions[inscriptionsContract][count + i] = newInscriptions[
                     i
                 ];
             }
@@ -31,6 +31,7 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
     struct ContractInfo {
         string base;
         string contractURI;
+        string postfix;
     }
 
     event BaseURIsUpdated(address target, ContractInfo info);
@@ -51,7 +52,8 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
         return
             string.concat(
                 contractInfos[msg.sender].base,
-                StringsBytes32.toHexString(inscriptions[msg.sender][tokenId])
+                StringsBytes32.toHexString(inscriptions[msg.sender][tokenId]),
+                contractInfos[msg.sender].postfix
             );
     }
 
@@ -60,13 +62,18 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
     }
 
     function initializeWithData(bytes memory initData) external {
-        (string memory _base, string memory _contractURI) = abi.decode(
-            initData,
-            (string, string)
-        );
+        (
+            string memory _base,
+            string memory _postfix,
+            string memory _contractURI
+        ) = abi.decode(initData, (string, string, string));
         _setBaseURIs(
             msg.sender,
-            ContractInfo({base: _base, contractURI: _contractURI})
+            ContractInfo({
+                base: _base,
+                postfix: _postfix,
+                contractURI: _contractURI
+            })
         );
     }
 }
