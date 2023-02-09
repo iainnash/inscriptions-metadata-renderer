@@ -5,6 +5,7 @@ base64/=lib/zora-drops-contracts/lib/base64/
 ds-test/=lib/forge-std/lib/ds-test/src/
 erc721a-upgradeable/=lib/zora-drops-contracts/lib/ERC721A-Upgradeable/contracts/
 forge-std/=lib/forge-std/src/
+micro-onchain-metadata-utils/=lib/micro-onchain-metadata-utils/src/
 openzeppelin-contracts-upgradeable/=lib/zora-drops-contracts/lib/openzeppelin-contracts-upgradeable/
 openzeppelin-contracts/=lib/zora-drops-contracts/lib/openzeppelin-contracts/
 zora-drops-contracts/=lib/zora-drops-contracts/src/

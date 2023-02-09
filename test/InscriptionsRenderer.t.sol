@@ -25,15 +25,20 @@ contract InscriptionsRendererTest is Test {
     function test_NewInscription() public {
         renderer.initializeWithData(
             abi.encode(
-                "https://ordinals.com/inscription/",
-                "i0",
-                "https://ipfs.io/bafy..."
+                InscriptionsRenderer.ContractInfo({
+                    animationBase: "https://ordinals.com/inscritions/...",
+                    animationPostfix: "i0",
+                    imageBase: "ipfs://asdf",
+                    imagePostfix: ".png",
+                    title: "inscriptions",
+                    description: "inscriptions"
+                })
             )
         );
         renderer.addInscriptions(address(this), _getDemoData(160));
         assertEq(
             renderer.tokenURI(10),
-            "https://ordinals.com/inscription/c65a7bb8d6351c1cf70c95a316cc6a92839c986682d98bc35f958f4883f9d2a8i0"
+            "data:application/json;base64,eyJuYW1lIjogImluc2NyaXB0aW9ucyIsImRlc2NyaXB0aW9uIjogImluc2NyaXB0aW9ucyBcbiBodHRwczovL29yZGluYWxzLmNvbS9pbnNjcml0aW9ucy8uLi42ZTE1NDAxNzFiNmMwYzk2MGI3MWE3MDIwZDlmNjAwNzdmNmFmOTMxYThiYmY1OTBkYTAyMjNkYWNmNzVjN2FmaTAiLCJpbWFnZSI6ICJpcGZzOi8vYXNkZjZlMTU0MDE3MWI2YzBjOTYwYjcxYTcwMjBkOWY2MDA3N2Y2YWY5MzFhOGJiZjU5MGRhMDIyM2RhY2Y3NWM3YWYucG5nIiwiYW5pbWF0aW9uX3VybCI6ICJodHRwczovL29yZGluYWxzLmNvbS9pbnNjcml0aW9ucy8uLi42ZTE1NDAxNzFiNmMwYzk2MGI3MWE3MDIwZDlmNjAwNzdmNmFmOTMxYThiYmY1OTBkYTAyMjNkYWNmNzVjN2FmaTAiLCJleHRlcm5hbF91cmwiOiAiaHR0cHM6Ly9vcmRpbmFscy5jb20vaW5zY3JpdGlvbnMvLi4uNmUxNTQwMTcxYjZjMGM5NjBiNzFhNzAyMGQ5ZjYwMDc3ZjZhZjkzMWE4YmJmNTkwZGEwMjIzZGFjZjc1YzdhZmkwIn0="
         );
     }
 }
