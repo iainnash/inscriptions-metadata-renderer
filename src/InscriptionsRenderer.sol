@@ -46,6 +46,14 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
         }
     }
 
+    function getTxnHashForTokenId(address inscriptionsContract, uint256 tokenId)
+        external
+        view
+        returns (bytes32)
+    {
+        return inscriptions[inscriptionsContract][tokenId];
+    }
+
     function setBaseURIs(address target, ContractInfo memory info)
         external
         requireSenderAdmin(target)
@@ -65,16 +73,20 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
             contractInfos[msg.sender].animationPostfix
         );
 
+        string memory btcHash = StringsBytes32.toHexString(
+            inscriptions[msg.sender][tokenId]
+        );
+
         string memory imageURI = string.concat(
             contractInfos[msg.sender].imageBase,
-            StringsBytes32.toHexString(inscriptions[msg.sender][tokenId]),
+            btcHash,
             contractInfos[msg.sender].imagePostfix
         );
 
         ContractInfo memory info = contractInfos[msg.sender];
 
         MetadataBuilder.JSONItem[]
-            memory items = new MetadataBuilder.JSONItem[](5);
+            memory items = new MetadataBuilder.JSONItem[](6);
         items[0].key = MetadataJSONKeys.keyName;
         items[0].value = string.concat(info.title);
         items[0].quote = true;
@@ -94,6 +106,20 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
         items[4].key = "external_url";
         items[4].value = animationURI;
         items[4].quote = true;
+
+        items[4].key = "external_url";
+        items[4].value = animationURI;
+        items[4].quote = true;
+
+        MetadataBuilder.JSONItem[]
+            memory properties = new MetadataBuilder.JSONItem[](1);
+        properties[0].key = "btc transaction hash";
+        properties[0].value = btcHash;
+        properties[0].quote = true;
+
+        items[5].key = MetadataJSONKeys.keyProperties;
+        items[5].quote = false;
+        items[5].value = MetadataBuilder.generateJSON(properties);
 
         return MetadataBuilder.generateEncodedJSON(items);
     }
