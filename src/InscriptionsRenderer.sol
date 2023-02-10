@@ -12,11 +12,21 @@ import {StringsBytes32} from "./StringsBytes32.sol";
 /// @notice Inscriptions Metadata on-chain renderer
 contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
     /// @notice Stores address => tokenId => bytes32 btc txn id
-    mapping(address => mapping(uint256 => bytes32)) inscriptions;
+    mapping(address => mapping(uint256 => Inscription)) inscriptions;
+    // /// @notice Stores address => tokenId => Theme btc txn id
+    // mapping(address => mapping(uint256 => Inscription)) themes;
     /// @notice Stores address => numberInscribedTokens
     mapping(address => uint256) inscriptionsCount;
     /// @notice Stores address => string base, string postfix, string contractURI for urls
     mapping(address => ContractInfo) contractInfos;
+
+    struct Inscription {
+        bytes32 btc_txn;
+        string tune;
+        string resonance;
+        string brush;
+        string depth;
+    }
 
     struct ContractInfo {
         string animationBase;
@@ -31,7 +41,7 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
 
     function addInscriptions(
         address inscriptionsContract,
-        bytes32[] calldata newInscriptions
+        Inscription[] calldata newInscriptions
     ) external requireSenderAdmin(inscriptionsContract) {
         unchecked {
             // get count
@@ -49,7 +59,7 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
     function getTxnHashForTokenId(address inscriptionsContract, uint256 tokenId)
         external
         view
-        returns (bytes32)
+        returns (Inscription memory)
     {
         return inscriptions[inscriptionsContract][tokenId];
     }
@@ -67,15 +77,15 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
     }
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
+        Inscription memory inscription = inscriptions[msg.sender][tokenId];
+
         string memory animationURI = string.concat(
             contractInfos[msg.sender].animationBase,
-            StringsBytes32.toHexString(inscriptions[msg.sender][tokenId]),
+            StringsBytes32.toHexString(inscription.btc_txn),
             contractInfos[msg.sender].animationPostfix
         );
 
-        string memory btcHash = StringsBytes32.toHexString(
-            inscriptions[msg.sender][tokenId]
-        );
+        string memory btcHash = StringsBytes32.toHexString(inscription.btc_txn);
 
         string memory imageURI = string.concat(
             contractInfos[msg.sender].imageBase,
@@ -112,10 +122,26 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
         items[4].quote = true;
 
         MetadataBuilder.JSONItem[]
-            memory properties = new MetadataBuilder.JSONItem[](1);
+            memory properties = new MetadataBuilder.JSONItem[](5);
         properties[0].key = "btc transaction hash";
         properties[0].value = btcHash;
         properties[0].quote = true;
+
+        properties[1].key = "tune";
+        properties[1].value = inscription.tune;
+        properties[1].quote = true;
+
+        properties[2].key = "resonance";
+        properties[2].value = inscription.resonance;
+        properties[2].quote = true;
+
+        properties[3].key = "brush";
+        properties[3].value = inscription.brush;
+        properties[3].quote = true;
+
+        properties[4].key = "depth";
+        properties[4].value = inscription.depth;
+        properties[4].quote = true;
 
         items[5].key = MetadataJSONKeys.keyProperties;
         items[5].quote = false;
