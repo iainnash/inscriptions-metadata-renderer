@@ -5,6 +5,7 @@ import {IMetadataRenderer} from "zora-drops-contracts/interfaces/IMetadataRender
 import {MetadataRenderAdminCheck} from "zora-drops-contracts/metadata/MetadataRenderAdminCheck.sol";
 import {MetadataBuilder} from "micro-onchain-metadata-utils/MetadataBuilder.sol";
 import {MetadataJSONKeys} from "micro-onchain-metadata-utils/MetadataJSONKeys.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {StringsBytes32} from "./StringsBytes32.sol";
 
@@ -35,6 +36,7 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
         string imagePostfix;
         string title;
         string description;
+        string contractURI;
     }
 
     event BaseURIsUpdated(address target, ContractInfo info);
@@ -98,7 +100,11 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
         MetadataBuilder.JSONItem[]
             memory items = new MetadataBuilder.JSONItem[](6);
         items[0].key = MetadataJSONKeys.keyName;
-        items[0].value = string.concat(info.title);
+        items[0].value = string.concat(
+            info.title,
+            " #",
+            Strings.toString(tokenId)
+        );
         items[0].quote = true;
 
         items[1].key = MetadataJSONKeys.keyDescription;
@@ -152,22 +158,7 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
 
     function contractURI() external view returns (string memory) {
         ContractInfo memory info = contractInfos[msg.sender];
-
-        MetadataBuilder.JSONItem[]
-            memory items = new MetadataBuilder.JSONItem[](3);
-        items[0].key = MetadataJSONKeys.keyName;
-        items[0].value = info.title;
-        items[0].quote = true;
-
-        items[1].key = MetadataJSONKeys.keyDescription;
-        items[1].value = info.description;
-        items[1].quote = true;
-
-        items[2].key = MetadataJSONKeys.keyImage;
-        items[2].value = string.concat(info.imageBase, "/contract");
-        items[2].quote = true;
-
-        return MetadataBuilder.generateEncodedJSON(items);
+        return info.contractURI;
     }
 
     function initializeWithData(bytes memory initData) external {
