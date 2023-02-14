@@ -6,28 +6,40 @@ import {MetadataRenderAdminCheck} from "zora-drops-contracts/metadata/MetadataRe
 import {MetadataBuilder} from "micro-onchain-metadata-utils/MetadataBuilder.sol";
 import {MetadataJSONKeys} from "micro-onchain-metadata-utils/MetadataJSONKeys.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {SSTORE2} from "./SStore2.sol";
 
 import {StringsBytes32} from "./StringsBytes32.sol";
 
 /// @author @isiain
 /// @notice Inscriptions Metadata on-chain renderer
-contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
+contract InscriptionsStoredRenderer is
+    IMetadataRenderer,
+    MetadataRenderAdminCheck
+{
     /// @notice Stores address => tokenId => bytes32 btc txn id
-    mapping(address => mapping(uint256 => Inscription)) inscriptions;
-    // /// @notice Stores address => tokenId => Theme btc txn id
-    // mapping(address => mapping(uint256 => Inscription)) themes;
-    /// @notice Stores address => numberInscribedTokens
-    mapping(address => uint256) inscriptionsCount;
-    /// @notice Stores address => string base, string postfix, string contractURI for urls
-    mapping(address => ContractInfo) contractInfos;
+    mapping(address => InscriptionChunk[]) inscriptionChunks;
+
+    struct InscriptionChunk {
+        // inclusive, fromToken starts at 0
+        uint256 fromToken;
+        uint256 size;
+        address dataContract;
+    }
 
     struct Inscription {
         bytes32 btc_txn;
-        string tune;
-        string resonance;
-        string brush;
-        string depth;
+        string properties;
     }
+
+    // struct InscriptionsData {
+    //   Inscription[] inscriptions;
+    // }
+
+    /// @notice Stores address => numberInscribedTokens
+    mapping(address => uint256) numberInscribedTokens;
+
+    /// @notice Stores address => string base, string postfix, string contractURI for urls
+    mapping(address => ContractInfo) contractInfos;
 
     struct ContractInfo {
         string animationBase;
@@ -41,29 +53,67 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
 
     event BaseURIsUpdated(address target, ContractInfo info);
 
+    event NewChunk(InscriptionChunk);
+
     function addInscriptions(
         address inscriptionsContract,
         Inscription[] calldata newInscriptions
     ) external requireSenderAdmin(inscriptionsContract) {
         unchecked {
             // get count
-            uint256 count = inscriptionsCount[inscriptionsContract];
-            for (uint256 i = 1; i < newInscriptions.length + 1; ++i) {
-                inscriptions[inscriptionsContract][count + i] = newInscriptions[
-                    i - 1
-                ];
-            }
+            uint256 count = numberInscribedTokens[inscriptionsContract];
+            address data = SSTORE2.write(abi.encode(newInscriptions));
+            InscriptionChunk memory newChunk = InscriptionChunk({
+                fromToken: count,
+                size: newInscriptions.length,
+                dataContract: data
+            });
+            inscriptionChunks[inscriptionsContract].push(newChunk);
+            emit NewChunk(newChunk);
+
             // update count
-            inscriptionsCount[inscriptionsContract] = count;
+            numberInscribedTokens[inscriptionsContract] =
+                count +
+                newInscriptions.length;
         }
     }
 
-    function getTxnHashForTokenId(address inscriptionsContract, uint256 tokenId)
-        external
-        view
-        returns (Inscription memory)
-    {
-        return inscriptions[inscriptionsContract][tokenId];
+    error NoChunkFound();
+
+    function _findInscriptionChunk(
+        address inscriptionsContract,
+        uint256 tokenId
+    ) internal view returns (InscriptionChunk memory) {
+        InscriptionChunk memory thisChunk;
+        uint256 size = inscriptionChunks[inscriptionsContract].length;
+        uint256 offsetTokenId = tokenId - 1;
+        unchecked {
+            for (uint256 i = 0; i < size; ++i) {
+                thisChunk = inscriptionChunks[inscriptionsContract][i];
+                if (
+                    thisChunk.fromToken <= offsetTokenId &&
+                    thisChunk.fromToken + thisChunk.size > offsetTokenId
+                ) {
+                    return thisChunk;
+                }
+            }
+            revert NoChunkFound();
+        }
+    }
+
+    function getInscriptionForTokenId(
+        address inscriptionsContract,
+        uint256 tokenId
+    ) public view returns (Inscription memory) {
+        InscriptionChunk memory thisChunk = _findInscriptionChunk(
+            inscriptionsContract,
+            tokenId
+        );
+        Inscription[] memory inscriptions = abi.decode(
+            SSTORE2.read(thisChunk.dataContract),
+            (Inscription[])
+        );
+        return inscriptions[tokenId - thisChunk.fromToken];
     }
 
     function setBaseURIs(address target, ContractInfo memory info)
@@ -79,7 +129,10 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
     }
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
-        Inscription memory inscription = inscriptions[msg.sender][tokenId];
+        Inscription memory inscription = getInscriptionForTokenId(
+            msg.sender,
+            tokenId
+        );
 
         string memory animationURI = string.concat(
             contractInfos[msg.sender].animationBase,
@@ -127,31 +180,15 @@ contract InscriptionsRenderer is IMetadataRenderer, MetadataRenderAdminCheck {
         items[4].value = animationURI;
         items[4].quote = true;
 
-        MetadataBuilder.JSONItem[]
-            memory properties = new MetadataBuilder.JSONItem[](5);
-        properties[0].key = "btc transaction hash";
-        properties[0].value = btcHash;
-        properties[0].quote = true;
-
-        properties[1].key = "tune";
-        properties[1].value = inscription.tune;
-        properties[1].quote = true;
-
-        properties[2].key = "resonance";
-        properties[2].value = inscription.resonance;
-        properties[2].quote = true;
-
-        properties[3].key = "brush";
-        properties[3].value = inscription.brush;
-        properties[3].quote = true;
-
-        properties[4].key = "depth";
-        properties[4].value = inscription.depth;
-        properties[4].quote = true;
-
         items[5].key = MetadataJSONKeys.keyProperties;
         items[5].quote = false;
-        items[5].value = MetadataBuilder.generateJSON(properties);
+        items[5].value = string.concat(
+            '{"btc transaction hash": "',
+            btcHash,
+            '", ',
+            inscription.properties,
+            "}"
+        );
 
         return MetadataBuilder.generateEncodedJSON(items);
     }
