@@ -71,11 +71,16 @@ contract InscriptionsStoredRendererTest is Test {
                 })
             )
         );
-        renderer.addInscriptions(address(this), _getDemoData(50));
+        renderer.addInscriptions(address(this), _getDemoData(5));
+        renderer.addInscriptions(address(this), _getDemoData(5));
         renderer.getInscriptionForTokenId(address(this), 1);
         assertEq(
             renderer.tokenURI(10),
-            "data:application/json;base64,eyJuYW1lIjogImluc2NyaXB0aW9ucyAjMTAiLCJkZXNjcmlwdGlvbiI6ICJpbnNjcmlwdGlvbnMgXG4gaHR0cHM6Ly9vcmRpbmFscy5jb20vaW5zY3JpdGlvbnMvLi4uYzY1YTdiYjhkNjM1MWMxY2Y3MGM5NWEzMTZjYzZhOTI4MzljOTg2NjgyZDk4YmMzNWY5NThmNDg4M2Y5ZDJhOGkwIiwiaW1hZ2UiOiAiaXBmczovL2FzZGZjNjVhN2JiOGQ2MzUxYzFjZjcwYzk1YTMxNmNjNmE5MjgzOWM5ODY2ODJkOThiYzM1Zjk1OGY0ODgzZjlkMmE4LnBuZyIsImFuaW1hdGlvbl91cmwiOiAiaHR0cHM6Ly9vcmRpbmFscy5jb20vaW5zY3JpdGlvbnMvLi4uYzY1YTdiYjhkNjM1MWMxY2Y3MGM5NWEzMTZjYzZhOTI4MzljOTg2NjgyZDk4YmMzNWY5NThmNDg4M2Y5ZDJhOGkwIiwiZXh0ZXJuYWxfdXJsIjogImh0dHBzOi8vb3JkaW5hbHMuY29tL2luc2NyaXRpb25zLy4uLmM2NWE3YmI4ZDYzNTFjMWNmNzBjOTVhMzE2Y2M2YTkyODM5Yzk4NjY4MmQ5OGJjMzVmOTU4ZjQ4ODNmOWQyYThpMCIsInByb3BlcnRpZXMiOiB7ImJ0YyB0cmFuc2FjdGlvbiBoYXNoIjogImM2NWE3YmI4ZDYzNTFjMWNmNzBjOTVhMzE2Y2M2YTkyODM5Yzk4NjY4MmQ5OGJjMzVmOTU4ZjQ4ODNmOWQyYTgiLCAidHVuZSI6IipVTktOT1dOKiIsInJlc29uYW5jZSI6IipBTFBIQSoiLCJicnVzaCI6IjB4YmMxIiwiZGVwdGgiOiIxNiJ9fQ=="
+            "data:application/json;base64,eyJuYW1lIjogImluc2NyaXB0aW9ucyAjMTAiLCJkZXNjcmlwdGlvbiI6ICJpbnNjcmlwdGlvbnMgXG4gaHR0cHM6Ly9vcmRpbmFscy5jb20vaW5zY3JpdGlvbnMvLi4uMDM2YjYzODRiNWVjYTc5MWM2Mjc2MTE1MmQwYzc5YmIwNjA0YzEwNGE1ZmI2ZjRlYjA3MDNmMzE1NGJiM2RiMGkwIiwiaW1hZ2UiOiAiaXBmczovL2FzZGYwMzZiNjM4NGI1ZWNhNzkxYzYyNzYxMTUyZDBjNzliYjA2MDRjMTA0YTVmYjZmNGViMDcwM2YzMTU0YmIzZGIwLnBuZyIsImFuaW1hdGlvbl91cmwiOiAiaHR0cHM6Ly9vcmRpbmFscy5jb20vaW5zY3JpdGlvbnMvLi4uMDM2YjYzODRiNWVjYTc5MWM2Mjc2MTE1MmQwYzc5YmIwNjA0YzEwNGE1ZmI2ZjRlYjA3MDNmMzE1NGJiM2RiMGkwIiwiZXh0ZXJuYWxfdXJsIjogImh0dHBzOi8vb3JkaW5hbHMuY29tL2luc2NyaXRpb25zLy4uLjAzNmI2Mzg0YjVlY2E3OTFjNjI3NjExNTJkMGM3OWJiMDYwNGMxMDRhNWZiNmY0ZWIwNzAzZjMxNTRiYjNkYjBpMCIsInByb3BlcnRpZXMiOiB7ImJ0YyB0cmFuc2FjdGlvbiBoYXNoIjogIjAzNmI2Mzg0YjVlY2E3OTFjNjI3NjExNTJkMGM3OWJiMDYwNGMxMDRhNWZiNmY0ZWIwNzAzZjMxNTRiYjNkYjAiLCA1InR1bmUiOiIqVU5LTk9XTioiLCJyZXNvbmFuY2UiOiIqQUxQSEEqIiwiYnJ1c2giOiIweGJjMSIsImRlcHRoIjoiMTYifX0="
         );
+        vm.expectRevert();
+        renderer.tokenURI(11);
+        vm.expectRevert();
+        renderer.tokenURI(0);
     }
 }
