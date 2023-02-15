@@ -4,6 +4,8 @@ pragma solidity ^0.8.16;
 import "forge-std/Test.sol";
 import "../src/InscriptionsStoredRenderer.sol";
 
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+
 contract InscriptionsStoredRendererTest is Test {
     InscriptionsStoredRenderer renderer;
 
@@ -19,10 +21,40 @@ contract InscriptionsStoredRendererTest is Test {
         data = new InscriptionsStoredRenderer.Inscription[](size);
         for (uint256 i = 0; i < size; i++) {
             data[i] = InscriptionsStoredRenderer.Inscription({
-                btc_txn: keccak256(abi.encode(i)),
-                properties: '"tune":"*UNKNOWN*","resonance":"*ALPHA*","brush":"0xbc1","depth":"16"'
+                btc_txn: keccak256(abi.encode(i + 1)),
+                properties: string.concat(Strings.toString(i + 1),'"tune":"*UNKNOWN*","resonance":"*ALPHA*","brush":"0xbc1","depth":"16"')
             });
         }
+    }
+
+    function test_ChunkHandoff() public {
+        renderer.initializeWithData(
+            abi.encode(
+                InscriptionsStoredRenderer.ContractInfo({
+                    animationBase: "https://ordinals.com/inscritions/...",
+                    animationPostfix: "i0",
+                    imageBase: "ipfs://asdf",
+                    imagePostfix: ".png",
+                    title: "inscriptions",
+                    description: "inscriptions",
+                    contractURI: "inscriptions"
+                })
+            )
+        );
+
+
+        renderer.addInscriptions(address(this), _getDemoData(1));
+        renderer.addInscriptions(address(this), _getDemoData(2));
+        renderer.addInscriptions(address(this), _getDemoData(3));
+
+        vm.expectRevert();
+        renderer.getInscriptionForTokenId(address(this), 0);
+        assertEq(renderer.getInscriptionForTokenId(address(this), 1).btc_txn, keccak256(abi.encode(1)));
+        assertEq(renderer.getInscriptionForTokenId(address(this), 2).btc_txn, keccak256(abi.encode(1)));
+        assertEq(renderer.getInscriptionForTokenId(address(this), 3).btc_txn, keccak256(abi.encode(2)));
+        assertEq(renderer.getInscriptionForTokenId(address(this), 4).btc_txn, keccak256(abi.encode(1)));
+        assertEq(renderer.getInscriptionForTokenId(address(this), 5).btc_txn, keccak256(abi.encode(2)));
+        assertEq(renderer.getInscriptionForTokenId(address(this), 6).btc_txn, keccak256(abi.encode(3)));
     }
 
     function test_NewInscription() public {

@@ -31,10 +31,6 @@ contract InscriptionsStoredRenderer is
         string properties;
     }
 
-    // struct InscriptionsData {
-    //   Inscription[] inscriptions;
-    // }
-
     /// @notice Stores address => numberInscribedTokens
     mapping(address => uint256) numberInscribedTokens;
 
@@ -53,7 +49,7 @@ contract InscriptionsStoredRenderer is
 
     event BaseURIsUpdated(address target, ContractInfo info);
 
-    event NewChunk(InscriptionChunk);
+    event NewChunk(InscriptionChunk, uint256);
 
     function addInscriptions(
         address inscriptionsContract,
@@ -64,35 +60,40 @@ contract InscriptionsStoredRenderer is
             uint256 count = numberInscribedTokens[inscriptionsContract];
             address data = SSTORE2.write(abi.encode(newInscriptions));
             InscriptionChunk memory newChunk = InscriptionChunk({
-                fromToken: count,
+                fromToken: count + 1,
                 size: newInscriptions.length,
                 dataContract: data
             });
             inscriptionChunks[inscriptionsContract].push(newChunk);
-            emit NewChunk(newChunk);
 
             // update count
             numberInscribedTokens[inscriptionsContract] =
                 count +
                 newInscriptions.length;
+
+            emit NewChunk(newChunk, numberInscribedTokens[inscriptionsContract]);
         }
     }
 
     error NoChunkFound();
 
+    error InvalidToken();
+
     function _findInscriptionChunk(
         address inscriptionsContract,
         uint256 tokenId
     ) internal view returns (InscriptionChunk memory) {
+        if (tokenId == 0) {
+            revert InvalidToken();
+        }
         InscriptionChunk memory thisChunk;
         uint256 size = inscriptionChunks[inscriptionsContract].length;
-        uint256 offsetTokenId = tokenId - 1;
         unchecked {
             for (uint256 i = 0; i < size; ++i) {
                 thisChunk = inscriptionChunks[inscriptionsContract][i];
                 if (
-                    thisChunk.fromToken <= offsetTokenId &&
-                    thisChunk.fromToken + thisChunk.size > offsetTokenId
+                    thisChunk.fromToken <= tokenId &&
+                    thisChunk.fromToken + thisChunk.size > tokenId
                 ) {
                     return thisChunk;
                 }
