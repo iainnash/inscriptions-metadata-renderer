@@ -27,6 +27,35 @@ contract InscriptionsStoredRendererTest is Test {
         }
     }
 
+    function test_ChunkSizesFull() public {
+        renderer.initializeWithData(
+            abi.encode(
+                InscriptionsStoredRenderer.ContractInfo({
+                    animationBase: "https://ordinals.com/inscritions/...",
+                    animationPostfix: "i0",
+                    imageBase: "ipfs://asdf",
+                    imagePostfix: ".png",
+                    title: "inscriptions",
+                    description: "inscriptions",
+                    contractURI: "inscriptions"
+                })
+            )
+        );
+        
+
+
+        for (uint256 i = 0; i < 8*2; ++i) {
+            renderer.addInscriptions(address(this), _getDemoData(50));
+        }
+
+        renderer.tokenURI(800);
+        vm.expectRevert();
+        renderer.tokenURI(801);
+        vm.expectRevert();
+        renderer.tokenURI(0);
+
+    }
+
     function test_ChunkHandoff() public {
         renderer.initializeWithData(
             abi.encode(
